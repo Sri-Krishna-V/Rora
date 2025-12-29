@@ -1,0 +1,5 @@
+{
+  "name": "Rora",
+  "description": "An agentic playground that automatically generates Jest unit tests as you type using Gemini 2.5 Flash.",
+  "requestFramePermissions": []
+}
