@@ -1,0 +1,51 @@
+# Dependencies
+node_modules/
+npm-debug.log*
+package-lock.json
+
+# Build outputs
+dist/
+out/
+*.vsix
+
+# Testing
+.vscode-test/
+coverage/
+.nyc_output/
+
+# Python
+rora_agent/.venv/
+rora_agent/__pycache__/
+rora_agent/**/__pycache__/
+rora_agent/**/*.pyc
+rora_agent/.pytest_cache/
+rora_agent/.mypy_cache/
+rora_agent/dist/
+rora_agent/build/
+rora_agent/*.egg-info/
+.env
+.env.local
+
+# Generated test files
+rora_tests/
+**/.rora_cache/
+
+# IDE
+.vscode/settings.json
+.vscode/launch.json
+.vscode/extensions.json
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# OS
+Thumbs.db
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Temp files
+*.tmp
+*.log

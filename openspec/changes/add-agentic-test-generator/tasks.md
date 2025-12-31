@@ -2,10 +2,10 @@
 
 ## Phase 1: Project Setup & Infrastructure
 
-- [ ] **1.1** Initialize VSCode extension project with TypeScript, esbuild bundler, and standard structure
-- [ ] **1.2** Set up Python backend project with poetry/pip for agent code
-- [ ] **1.3** Configure development environment with hot-reload for extension and Python
-- [ ] **1.4** Set up inter-process communication between TypeScript extension and Python backend (stdio JSON-RPC or HTTP)
+- [x] **1.1** Initialize VSCode extension project with TypeScript, esbuild bundler, and standard structure
+- [x] **1.2** Set up Python backend project with uv for agent code
+- [x] **1.3** Configure development environment with hot-reload for extension and Python
+- [x] **1.4** Set up inter-process communication between TypeScript extension and Python backend (stdio JSON-RPC)
 
 ## Phase 2: Python Function Detection
 

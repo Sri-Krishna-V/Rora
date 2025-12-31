@@ -1,0 +1,116 @@
+{
+  "name": "rora",
+  "displayName": "Rora - AI Test Generator",
+  "description": "AI-powered Python test generation using LangChain agents",
+  "version": "0.1.0",
+  "publisher": "rora",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Testing",
+    "Machine Learning",
+    "Programming Languages"
+  ],
+  "keywords": [
+    "python",
+    "test",
+    "ai",
+    "langchain",
+    "pytest",
+    "unittest"
+  ],
+  "activationEvents": [
+    "onLanguage:python"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "rora.generateTest",
+        "title": "Rora: Generate Test"
+      },
+      {
+        "command": "rora.regenerateTest",
+        "title": "Rora: Regenerate Test"
+      },
+      {
+        "command": "rora.viewTest",
+        "title": "Rora: View Test"
+      },
+      {
+        "command": "rora.runTest",
+        "title": "Rora: Run Test"
+      },
+      {
+        "command": "rora.showTestPanel",
+        "title": "Rora: Show Test Panel"
+      }
+    ],
+    "configuration": {
+      "title": "Rora",
+      "properties": {
+        "rora.testFramework": {
+          "type": "string",
+          "default": "pytest",
+          "enum": [
+            "pytest",
+            "unittest"
+          ],
+          "description": "Test framework to use for generated tests"
+        },
+        "rora.geminiApiKey": {
+          "type": "string",
+          "default": "",
+          "description": "API key for Google Gemini"
+        },
+        "rora.testDirectory": {
+          "type": "string",
+          "default": "rora_tests",
+          "description": "Directory to store generated tests"
+        },
+        "rora.pythonPath": {
+          "type": "string",
+          "default": "",
+          "description": "Path to Python interpreter (leave empty to auto-detect)"
+        }
+      }
+    },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "rora-test-explorer",
+          "title": "Rora Tests",
+          "icon": "$(beaker)"
+        }
+      ]
+    },
+    "views": {
+      "rora-test-explorer": [
+        {
+          "id": "roraTestList",
+          "name": "Generated Tests"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "esbuild src/extension.ts --bundle --outfile=dist/extension.js --external:vscode --format=cjs --platform=node",
+    "watch": "esbuild src/extension.ts --bundle --outfile=dist/extension.js --external:vscode --format=cjs --platform=node --sourcemap --watch",
+    "lint": "eslint src --ext ts",
+    "test": "node ./out/test/runTest.js"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "@types/vscode": "^1.85.0",
+    "@typescript-eslint/eslint-plugin": "^6.13.0",
+    "@typescript-eslint/parser": "^6.13.0",
+    "esbuild": "^0.19.8",
+    "eslint": "^8.54.0",
+    "typescript": "^5.3.2"
+  },
+  "dependencies": {
+    "vscode-jsonrpc": "^8.2.0"
+  }
+}
