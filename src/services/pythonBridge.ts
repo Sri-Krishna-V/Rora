@@ -20,7 +20,9 @@ export interface FunctionInfo {
     decorators: string[];
     is_async: boolean;
     is_method: boolean;
+    is_nested: boolean;
     class_name: string | null;
+    parent_function: string | null;
 }
 
 export interface ParseFileResult {

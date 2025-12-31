@@ -16,6 +16,11 @@ export function registerCommands(
         vscode.commands.registerCommand(
             'rora.generateTest',
             async (uri: vscode.Uri, func: FunctionInfo) => {
+                // Prevent duplicate operations
+                if (testRegistry.isOperationInProgress(uri.fsPath, func.name)) {
+                    vscode.window.showWarningMessage(`Operation already in progress for ${func.name}`);
+                    return;
+                }
                 await generateTest(uri, func, pythonBridge, testRegistry, codeLensProvider);
             }
         )
@@ -26,6 +31,10 @@ export function registerCommands(
         vscode.commands.registerCommand(
             'rora.regenerateTest',
             async (uri: vscode.Uri, func: FunctionInfo) => {
+                if (testRegistry.isOperationInProgress(uri.fsPath, func.name)) {
+                    vscode.window.showWarningMessage(`Operation already in progress for ${func.name}`);
+                    return;
+                }
                 await generateTest(uri, func, pythonBridge, testRegistry, codeLensProvider, true);
             }
         )
@@ -52,6 +61,11 @@ export function registerCommands(
         vscode.commands.registerCommand(
             'rora.runTest',
             async (uri: vscode.Uri, func: FunctionInfo) => {
+                if (testRegistry.isOperationInProgress(uri.fsPath, func.name)) {
+                    vscode.window.showWarningMessage(`Operation already in progress for ${func.name}`);
+                    return;
+                }
+                
                 const entry = testRegistry.getEntry(uri.fsPath, func.name);
                 
                 // If no test exists, generate first
@@ -107,6 +121,9 @@ async function generateTest(
         return false;
     }
 
+    // Set generating state
+    testRegistry.setOperationState(uri.fsPath, func.name, 'generating');
+
     // Show progress
     return vscode.window.withProgress(
         {
@@ -130,10 +147,12 @@ async function generateTest(
                 });
 
                 if (token.isCancellationRequested) {
+                    testRegistry.setOperationState(uri.fsPath, func.name, 'idle');
                     return false;
                 }
 
                 if (result.error) {
+                    testRegistry.setOperationState(uri.fsPath, func.name, 'idle');
                     vscode.window.showErrorMessage(`Rora: ${result.error}`);
                     return false;
                 }
@@ -141,6 +160,7 @@ async function generateTest(
                 // Validate generated code
                 const validation = await pythonBridge.validateSyntax(result.test_code);
                 if (!validation.valid) {
+                    testRegistry.setOperationState(uri.fsPath, func.name, 'idle');
                     vscode.window.showErrorMessage(
                         `Rora: Generated code has syntax error: ${validation.error}`
                     );
@@ -180,6 +200,9 @@ async function generateTest(
                     testFunctionName: result.test_function_name
                 });
 
+                // Clear generating state
+                testRegistry.setOperationState(uri.fsPath, func.name, 'idle');
+
                 // Refresh CodeLens
                 codeLensProvider.refresh();
 
@@ -189,6 +212,7 @@ async function generateTest(
 
                 return true;
             } catch (error) {
+                testRegistry.setOperationState(uri.fsPath, func.name, 'idle');
                 const message = error instanceof Error ? error.message : String(error);
                 vscode.window.showErrorMessage(`Rora: Failed to generate test - ${message}`);
                 return false;
@@ -210,6 +234,9 @@ async function runTest(
         return;
     }
 
+    // Set running state
+    testRegistry.setOperationState(uri.fsPath, func.name, 'running');
+
     await vscode.window.withProgress(
         {
             location: vscode.ProgressLocation.Notification,
@@ -224,6 +251,7 @@ async function runTest(
                 );
 
                 if (result.error) {
+                    testRegistry.setOperationState(uri.fsPath, func.name, 'idle');
                     vscode.window.showErrorMessage(`Rora: ${result.error}`);
                     return;
                 }
@@ -234,6 +262,7 @@ async function runTest(
                 );
 
                 if (outcome) {
+                    // updateResult also clears operation state
                     testRegistry.updateResult(
                         uri.fsPath,
                         func.name,
@@ -267,11 +296,14 @@ async function runTest(
                             outputChannel.show();
                         }
                     }
+                } else {
+                    testRegistry.setOperationState(uri.fsPath, func.name, 'idle');
                 }
 
                 // Refresh CodeLens
                 codeLensProvider.refresh();
             } catch (error) {
+                testRegistry.setOperationState(uri.fsPath, func.name, 'idle');
                 const message = error instanceof Error ? error.message : String(error);
                 vscode.window.showErrorMessage(`Rora: Failed to run test - ${message}`);
             }

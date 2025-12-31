@@ -9,17 +9,17 @@
 
 ## Phase 2: Python Function Detection
 
-- [ ] **2.1** Create Python AST parser module that extracts function metadata (name, line number, signature, docstring, decorators, body)
-- [ ] **2.2** Build TypeScript service to invoke Python parser and cache results per file
-- [ ] **2.3** Implement file change watcher to invalidate cache on edits
-- [ ] **2.4** Handle class methods, async functions, and nested functions
+- [x] **2.1** Create Python AST parser module that extracts function metadata (name, line number, signature, docstring, decorators, body)
+- [x] **2.2** Build TypeScript service to invoke Python parser and cache results per file
+- [x] **2.3** Implement file change watcher to invalidate cache on edits
+- [x] **2.4** Handle class methods, async functions, and nested functions
 
 ## Phase 3: CodeLens Provider
 
-- [ ] **3.1** Implement `CodeLensProvider` that displays "Generate | Run" above functions without tests
-- [ ] **3.2** Track test state per function (no-tests, has-tests, running, passed, failed)
-- [ ] **3.3** Update CodeLens to show "Re-Generate | View | Run" when tests exist
-- [ ] **3.4** Register CodeLens commands: `rora.generateTest`, `rora.regenerateTest`, `rora.viewTest`, `rora.runTest`
+- [x] **3.1** Implement `CodeLensProvider` that displays "Generate | Run" above functions without tests
+- [x] **3.2** Track test state per function (no-tests, has-tests, running, passed, failed)
+- [x] **3.3** Update CodeLens to show "Re-Generate | View | Run" when tests exist
+- [x] **3.4** Register CodeLens commands: `rora.generateTest`, `rora.regenerateTest`, `rora.viewTest`, `rora.runTest`
 
 ## Phase 4: LangGraph Test Generation Agent
 

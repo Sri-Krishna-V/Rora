@@ -5,12 +5,13 @@ from pathlib import Path
 from typing import Any
 
 
-def parse_python_file(file_path: str) -> dict[str, Any]:
+def parse_python_file(file_path: str, include_nested: bool = False) -> dict[str, Any]:
     """
     Parse a Python file and extract all function definitions.
 
     Args:
         file_path: Path to the Python file to parse
+        include_nested: If True, include nested functions (functions defined inside other functions)
 
     Returns:
         Dictionary with 'functions' list and optional 'error' field
@@ -23,32 +24,9 @@ def parse_python_file(file_path: str) -> dict[str, Any]:
         source = path.read_text(encoding="utf-8")
         tree = ast.parse(source, filename=file_path)
 
-        functions = []
-
-        for node in ast.walk(tree):
-            if isinstance(node, ast.ClassDef):
-                # Extract methods from classes
-                for item in node.body:
-                    if isinstance(item, (ast.FunctionDef, ast.AsyncFunctionDef)):
-                        func_info = extract_function_info(
-                            item, source, class_name=node.name)
-                        functions.append(func_info)
-            elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
-                # Check if this is a top-level function (not inside a class)
-                # We need to check parent context
-                pass
-
-        # Do a proper traversal for top-level functions
-        for node in tree.body:
-            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
-                func_info = extract_function_info(node, source)
-                functions.append(func_info)
-            elif isinstance(node, ast.ClassDef):
-                for item in node.body:
-                    if isinstance(item, (ast.FunctionDef, ast.AsyncFunctionDef)):
-                        func_info = extract_function_info(
-                            item, source, class_name=node.name)
-                        functions.append(func_info)
+        functions: list[dict[str, Any]] = []
+        _extract_functions_recursive(
+            tree.body, source, functions, include_nested=include_nested)
 
         return {"functions": functions}
 
@@ -58,10 +36,60 @@ def parse_python_file(file_path: str) -> dict[str, Any]:
         return {"functions": [], "error": str(e)}
 
 
+def _extract_functions_recursive(
+    nodes: list[ast.stmt],
+    source: str,
+    functions: list[dict[str, Any]],
+    class_name: str | None = None,
+    parent_function: str | None = None,
+    include_nested: bool = False,
+) -> None:
+    """
+    Recursively extract function definitions from AST nodes.
+
+    Args:
+        nodes: List of AST statement nodes to process
+        source: The full source code of the file
+        functions: List to append extracted function info to
+        class_name: Name of the containing class, if any
+        parent_function: Name of the containing function, if any (for nested functions)
+        include_nested: If True, include nested functions
+    """
+    for node in nodes:
+        if isinstance(node, ast.ClassDef):
+            # Process methods inside the class
+            _extract_functions_recursive(
+                node.body,
+                source,
+                functions,
+                class_name=node.name,
+                parent_function=parent_function,
+                include_nested=include_nested,
+            )
+        elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            # Extract function info
+            func_info = extract_function_info(
+                node, source, class_name=class_name, parent_function=parent_function
+            )
+            functions.append(func_info)
+
+            # Optionally process nested functions
+            if include_nested:
+                _extract_functions_recursive(
+                    node.body,
+                    source,
+                    functions,
+                    class_name=class_name,
+                    parent_function=node.name,
+                    include_nested=include_nested,
+                )
+
+
 def extract_function_info(
     node: ast.FunctionDef | ast.AsyncFunctionDef,
     source: str,
-    class_name: str | None = None
+    class_name: str | None = None,
+    parent_function: str | None = None,
 ) -> dict[str, Any]:
     """
     Extract detailed information about a function from its AST node.
@@ -70,6 +98,7 @@ def extract_function_info(
         node: The AST node representing the function
         source: The full source code of the file
         class_name: Name of the containing class, if any
+        parent_function: Name of the containing function, if this is a nested function
 
     Returns:
         Dictionary containing function metadata
@@ -100,6 +129,9 @@ def extract_function_info(
     body_lines = source_lines[start_line:end_line]
     body = "\n".join(body_lines)
 
+    # Determine if this is a nested function
+    is_nested = parent_function is not None
+
     return {
         "name": node.name,
         "lineno": node.lineno,
@@ -109,7 +141,9 @@ def extract_function_info(
         "decorators": decorators,
         "is_async": isinstance(node, ast.AsyncFunctionDef),
         "is_method": class_name is not None,
+        "is_nested": is_nested,
         "class_name": class_name,
+        "parent_function": parent_function,
         "body": body,
     }
 

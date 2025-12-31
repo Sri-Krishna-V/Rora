@@ -12,6 +12,9 @@ export interface TestEntry {
     lastResult?: 'passed' | 'failed' | 'error' | 'skipped';
 }
 
+/** Current operation state for a function */
+export type FunctionState = 'idle' | 'generating' | 'running';
+
 export interface TestRegistryData {
     version: number;
     entries: Record<string, TestEntry>;  // key: sourceFile:functionName
@@ -21,6 +24,13 @@ export class TestRegistry {
     private data: TestRegistryData;
     private context: vscode.ExtensionContext;
     private saveDebounce: NodeJS.Timeout | null = null;
+    
+    /** Tracks functions currently being generated or run */
+    private operationStates = new Map<string, FunctionState>();
+    
+    /** Event emitter for state changes */
+    private _onStateChange = new vscode.EventEmitter<{ sourceFile: string; functionName: string; state: FunctionState }>();
+    public readonly onStateChange = this._onStateChange.event;
 
     constructor(context: vscode.ExtensionContext) {
         this.context = context;
@@ -85,6 +95,8 @@ export class TestRegistry {
             entry.lastResult = result;
             this.save();
         }
+        // Clear running state
+        this.setOperationState(sourceFile, functionName, 'idle');
     }
 
     getEntriesForFile(sourceFile: string): TestEntry[] {
@@ -101,6 +113,28 @@ export class TestRegistry {
         const key = this.makeKey(sourceFile, functionName);
         delete this.data.entries[key];
         this.save();
+    }
+
+    // Operation state management
+    
+    setOperationState(sourceFile: string, functionName: string, state: FunctionState): void {
+        const key = this.makeKey(sourceFile, functionName);
+        if (state === 'idle') {
+            this.operationStates.delete(key);
+        } else {
+            this.operationStates.set(key, state);
+        }
+        this._onStateChange.fire({ sourceFile, functionName, state });
+    }
+
+    getOperationState(sourceFile: string, functionName: string): FunctionState {
+        const key = this.makeKey(sourceFile, functionName);
+        return this.operationStates.get(key) || 'idle';
+    }
+
+    isOperationInProgress(sourceFile: string, functionName: string): boolean {
+        const state = this.getOperationState(sourceFile, functionName);
+        return state !== 'idle';
     }
 
     getTestFilePath(sourceFile: string, testDirectory: string): string {

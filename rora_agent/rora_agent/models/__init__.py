@@ -14,7 +14,9 @@ class FunctionInfo(BaseModel):
     decorators: list[str] = []
     is_async: bool = False
     is_method: bool = False
+    is_nested: bool = False
     class_name: str | None = None
+    parent_function: str | None = None
     body: str = ""
 
 
